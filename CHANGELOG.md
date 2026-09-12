@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.1 — 2026-09-12
+
+Operator card so the human can actually drive Apex.
+
+- `references/operator.md` — copy-paste first lines for new / residual / APPLICATION / close
+- Wider auto-load triggers (audit this, bounty hunt, ragnarok, investigate, keep hunting)
+- On-invoke: read NOW.md first; OPEN means residual, not a new P0
+- "audit skill" in the description so it does not load the stub
+
+
 ## 1.3.0 — 2026-09-12
 
 Stop hallucinated component use and false-positive reports.

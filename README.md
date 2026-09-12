@@ -3,7 +3,7 @@
 Unified self-learning Web3 audit engine. Orchestrates kensho + ragnarok v4 +
 jailbreaker + iykes-web3-bughunt. The `bug-ai-auditor` slot is a routing stub.
 
-**v1.3.0** — component handshake + claim gate. See `CHANGELOG.md`,
+**v1.3.1** — component handshake + claim gate. See `CHANGELOG.md`,
 `references/handshake.md`, `references/anti-hallucination.md`.
 
 ## Install
@@ -27,6 +27,9 @@ The brain lives at `~/.apex-sentinel/` (outside the skill dir so updates never
 clobber learned state).
 
 ## Invoke
+
+Human playbook: `references/operator.md`.
+
 
 - `run apex` / `apex sentinel` / `full audit` → lifecycle P0–P10 + retro
 - `investigate X` on an OPEN hunt → residual dive, do not restart

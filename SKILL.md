@@ -1,14 +1,16 @@
 ---
 name: apex-sentinel
 description: >-
-  Unified self-learning Web3 audit engine. Orchestrates kensho + ragnarok v4 +
-  jailbreaker + bug-ai-auditor stub + iykes-web3-bughunt into one gated
-  engagement lifecycle with a component handshake and claim gate so findings
-  cannot ship unless the owning skill actually ran. Use when asked to "run apex",
-  "apex sentinel", a full audit, or any bug-hunt engagement. Short orders like
-  "investigate X" or "keep hunting" after OPEN are residual dives, not a new P0.
+  Unified self-learning Web3 audit engine (Apex Sentinel). Orchestrates kensho +
+  ragnarok v4 + jailbreaker + iykes-web3-bughunt with a component handshake and
+  claim gate. THIS is the audit skill — not bug-ai-auditor. Invoke on: run apex,
+  apex sentinel, apex residual, audit skill, full audit, web3 audit, smart contract
+  audit, DeFi hunt, bug hunt, bounty hunt, ragnarok, hunt this, audit this, audit
+  the repo, find bugs, JACKPOT, fork PoC, keep hunting, continue the hunt,
+  investigate (a contract/EOA/Safe/function). After NOW.md is OPEN, short orders
+  are residual P8 — do not restart P0. Operator card: references/operator.md.
 metadata:
-  version: 1.3.0
+  version: 1.3.1
   created: 2026-08-24
   updated: 2026-09-12
   claim_gate: scripts/claim_gate.py
@@ -31,6 +33,17 @@ a phase.
 
 `bug-ai-auditor` is a **routing stub**. When the user says "audit skill" they mean
 **this file**, not the stub.
+
+
+## On invoke (do this before anything else)
+
+1. `APEX=$(bash scripts/resolve_skill.sh apex-sentinel)` and load **this file**.
+2. If the user named a hunt (`hunts/<slug>`) or exactly one `hunts/*/research/NOW.md`
+   exists, **read NOW.md**. If it says OPEN / residual / Phase 6–8, this is
+   `apex residual` — do not restart P0–P5.
+3. Else new hunt: `scaffold.sh hunts/<slug>` then `brief.py`.
+4. `bash "$APEX/scripts/load_card.sh" <current-phase>` and load those files.
+5. Human driving this skill: `references/operator.md`.
 
 ## Intent routing (read first)
 
