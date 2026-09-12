@@ -3,16 +3,18 @@
 
 Usage:
   brief.py --product-type vault [--chain base] [--keywords "oracle,4626"]
-           [--target somedao] [--brain ~/.apex-sentinel]
+           [--target somedao] [--layer EVM|APPLICATION] [--brain ~/.apex-sentinel]
 
-Prints: freshness status, ranked taxonomy classes for the product type,
-matching false-positive patterns, target history, and recent lessons.
+Prints: freshness status, intent routing, ranked taxonomy classes for the
+product type, matching false-positive patterns, target history, and recent
+lessons. Bootstraps the brain if missing.
 """
-import argparse, json, re, sys
+import argparse, json, re, subprocess, sys
 from datetime import date, datetime
 from pathlib import Path
 
 STALE_DAYS = 14
+HERE = Path(__file__).resolve().parent
 
 
 def load(p, default):
@@ -34,17 +36,31 @@ def days_since(iso):
         return None
 
 
+def bootstrap(brain: Path) -> None:
+    init = HERE / "init_brain.py"
+    if init.exists():
+        subprocess.run([sys.executable, str(init), "--brain", str(brain)], check=False)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--product-type", dest="ptype")
     ap.add_argument("--chain")
     ap.add_argument("--keywords", help="comma separated")
     ap.add_argument("--target")
+    ap.add_argument("--layer", choices=("EVM", "APPLICATION", "SOLANA"), default="EVM")
     ap.add_argument("--brain", default="~/.apex-sentinel")
     a = ap.parse_args()
     brain = Path(a.brain).expanduser()
+    bootstrap(brain)
 
-    print(f"# APEX SENTINEL BRIEF — {date.today().isoformat()}")
+    print(f"# APEX SENTINEL BRIEF — {date.today().isoformat()} (v1.2.0)")
+    print(f"\nLayer: {a.layer}. Ragnarok: v4 (SYNTHESIS OPEN after thin map).")
+    print("Intent: 'investigate X' / 'keep hunting' after OPEN = residual P8, not a new P0.")
+    print("'audit skill' = Apex Sentinel, not the bug-ai-auditor stub.")
+    if a.layer == "APPLICATION":
+        print("APPLICATION: skip EVM reconstruction gate. Hunt compose → policy → simulate → execute.")
+        print("Check AS-022..AS-028, AS-030 first (kill switch, cooldown, 0x0 receiver, wrong dry-run).")
 
     # 1. freshness
     up = load(brain / "upstreams.json", {})
@@ -67,9 +83,11 @@ def main():
         pts = c.get("product_types", [])
         if a.ptype and (a.ptype in pts or "any" in pts):
             s += 10
+        if a.layer == "APPLICATION" and any(x in pts for x in ("policy", "mcp", "agent")):
+            s += 12
         hay = " ".join([c["name"], *c.get("aliases", [])]).lower()
         s += 3 * sum(1 for k in kws if k in hay)
-        s += min(c.get("hits", 0), 5)  # field-proven bump
+        s += min(c.get("hits", 0), 5)
         scored.append((s, c))
     scored.sort(key=lambda x: (-x[0], x[1]["id"]))
     top = [c for s, c in scored if s > 0][:10] or [c for _, c in scored[:8]]
@@ -94,13 +112,14 @@ def main():
     # 4. target history
     tj = load(brain / "targets.json", {"targets": {}})
     key = (a.target or "").lower().replace(" ", "-")
-    if key and key in tj["targets"]:
+    if key and key in tj.get("targets", {}):
         t = tj["targets"][key]
         print(f"\n## Prior engagements on '{a.target}' ({len(t['engagements'])})")
         for e in t["engagements"][-3:]:
             print(f"- {e['date']} @ {e.get('commit','?')}: {e.get('summary','')}"
                   + (f" findings={e['findings']}" if e.get("findings") else ""))
         print("→ Re-check what changed since last commit; do not re-run killed hypotheses blindly.")
+        print("→ If NOW.md already says OPEN/residual, do NOT restart P0–P5.")
 
     # 5. recent lessons
     led = load(brain / "LEARNINGS.md", "")
@@ -114,13 +133,13 @@ def main():
             cur.append(line)
     if cur:
         blocks.append(cur)
-    blocks = [b for b in blocks if "<NNN>" not in b[0]]  # skip format template
+    blocks = [b for b in blocks if "<NNN>" not in b[0]]
     if blocks:
-        print(f"\n## Recent lessons ({min(len(blocks), 6)} of {len(blocks)})")
-        for b in blocks[-6:]:
+        print(f"\n## Recent lessons ({min(len(blocks), 8)} of {len(blocks)})")
+        for b in blocks[-8:]:
             lid = b[0].split(" ", 1)[1].split(" |")[0]
             body = next((l for l in b if l.startswith("BODY:")), "")
-            print(f"- {lid}: {body[6:110]}")
+            print(f"- {lid}: {body[6:120]}")
 
     if not a.ptype:
         print("\n(tip: pass --product-type for sharper class ranking)")

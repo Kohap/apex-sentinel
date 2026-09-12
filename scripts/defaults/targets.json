@@ -1,0 +1,37 @@
+{
+  "targets": {
+    "umia": {
+      "last": "2026-09-12",
+      "engagements": [
+        {
+          "date": "2026-09-12",
+          "commit": "14db0636ac3b4c01c545369d27dcef6ad9d39953",
+          "summary": "Base 8453 TGE residual OPEN. No permissionless JACKPOT. Hub EOA + Safe 3/6 are TRUST. Honest empty report.md.",
+          "findings": "H-001/H-007/H-013 TRUST; L-052/L-053 FALSIFIED as permissionless"
+        }
+      ]
+    },
+    "tessera-v": {
+      "last": "2026-09-12",
+      "engagements": [
+        {
+          "date": "2026-09-12",
+          "commit": "unknown",
+          "summary": "Honest empty report.md. No CONFIRMED finding.",
+          "findings": ""
+        }
+      ]
+    },
+    "keeperhub-sky-exec": {
+      "last": "2026-09-12",
+      "engagements": [
+        {
+          "date": "2026-09-12",
+          "commit": "3798594540776497b3bc7830959a78ec63b3f98d",
+          "summary": "Application-layer Sky USDS/sUSDS exec. Patched kill-switch, cooldown, 0x0 receiver, wrong dry-run, redeem→deposit compose, IEEE cap, idempotency, key leak. Pushed main.",
+          "findings": "AS-022:High,AS-023:High,AS-024:High,AS-025:High,AS-026:High,AS-027:Med,AS-028:Med,AS-030:Low"
+        }
+      ]
+    }
+  }
+}

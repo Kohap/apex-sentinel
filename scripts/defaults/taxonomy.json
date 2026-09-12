@@ -1,0 +1,39 @@
+{
+  "_meta": {
+    "version": "1.2.0",
+    "last_updated": "2026-09-12",
+    "note": "Merged kensho 5.3/5.4 + ragnarok seams + field hits from Umia/KeeperHub/Tessera"
+  },
+  "classes": [
+    {"id": "AS-001", "name": "missing-access-control", "aliases": ["unguarded admin", "auth bypass"], "product_types": ["any"], "refs": ["kensho 5.1", "iykes step4"], "hits": 0},
+    {"id": "AS-002", "name": "reentrancy", "aliases": ["read-only reentrancy", "callback"], "product_types": ["any", "vault", "lending/CDP"], "refs": ["kensho 5.2"], "hits": 0},
+    {"id": "AS-003", "name": "first-depositor-inflation", "aliases": ["share inflation", "donation attack", "erc4626"], "product_types": ["vault"], "refs": ["kensho 5.3.7", "ragnarok donation-inflation"], "hits": 1, "kills_required": true},
+    {"id": "AS-004", "name": "oracle-spot-as-twap", "aliases": ["slot0 oracle", "spot price"], "product_types": ["lending/CDP", "perps", "launchpad"], "refs": ["kensho 5.3.3"], "hits": 0},
+    {"id": "AS-005", "name": "oracle-staleness", "aliases": ["closed-market feed"], "product_types": ["lending/CDP", "perps"], "refs": ["kensho 5.3.4"], "hits": 0},
+    {"id": "AS-006", "name": "migration-pool-squat", "aliases": ["uniswap pre-init"], "product_types": ["launchpad"], "refs": ["kensho 5.3.1"], "hits": 0},
+    {"id": "AS-007", "name": "flash-inflated-snapshot", "aliases": ["permissionless snapshot"], "product_types": ["distribution/index", "governance"], "refs": ["kensho 5.3.2"], "hits": 0},
+    {"id": "AS-008", "name": "fee-on-transfer-overcredit", "aliases": ["FoT"], "product_types": ["vault", "launchpad"], "refs": ["kensho 5.3.10"], "hits": 0},
+    {"id": "AS-009", "name": "rounding-favor-attacker", "aliases": ["precision"], "product_types": ["vault", "lending/CDP"], "refs": ["ragnarok seams"], "hits": 0},
+    {"id": "AS-010", "name": "signature-replay", "aliases": ["permit replay", "eip712"], "product_types": ["any"], "refs": ["kensho 5.3.11"], "hits": 0},
+    {"id": "AS-011", "name": "initializer-frontrun", "aliases": ["uninitialized proxy"], "product_types": ["any"], "refs": ["iykes step4"], "hits": 0},
+    {"id": "AS-012", "name": "uups-upgrade-auth", "aliases": ["beacon swap", "impl replace"], "product_types": ["any"], "refs": ["kensho 5.3.6"], "hits": 0, "trust_finding_default": true},
+    {"id": "AS-013", "name": "storage-collision", "aliases": ["slot clash"], "product_types": ["any"], "refs": ["kensho"], "hits": 0},
+    {"id": "AS-014", "name": "keeper-trusted-distribution", "aliases": ["distribute(holders,amounts)"], "product_types": ["distribution/index"], "refs": ["kensho 5.3.5"], "hits": 0, "trust_finding_default": true},
+    {"id": "AS-015", "name": "owner-backdoor", "aliases": ["rug by design", "1-step ownable"], "product_types": ["any"], "refs": ["kensho 5.3.6", "field-lessons 8"], "hits": 2, "trust_finding_default": true},
+    {"id": "AS-016", "name": "temporary-vs-persistent", "aliases": ["bank-run that restores"], "product_types": ["vault", "lending/CDP", "launchpad"], "refs": ["iykes kill rule"], "hits": 1, "kills_required": true},
+    {"id": "AS-017", "name": "cross-contract-composition", "aliases": ["divergent representations"], "product_types": ["any"], "refs": ["ragnarok v4 representations"], "hits": 0},
+    {"id": "AS-018", "name": "minOut-zero-self-sandwich", "aliases": ["defend with minOut=0"], "product_types": ["launchpad", "vault"], "refs": ["kensho 5.3.8"], "hits": 0},
+    {"id": "AS-019", "name": "async-snapshot-mev", "aliases": ["request-finalize"], "product_types": ["vault", "perps"], "refs": ["kensho 5.3.9"], "hits": 0},
+    {"id": "AS-020", "name": "pull-oracle-loose-window", "aliases": ["redstone tap-trade"], "product_types": ["perps"], "refs": ["kensho 5.3.11"], "hits": 0},
+    {"id": "AS-021", "name": "1-step-ownable-hot-eoa", "aliases": ["hub owner eoa", "nonce 0 owner"], "product_types": ["any", "launchpad"], "refs": ["field-lessons 8"], "hits": 1, "trust_finding_default": true},
+    {"id": "AS-022", "name": "client-kill-switch-override", "aliases": ["false ?? env", "killSwitch:false"], "product_types": ["policy", "agent", "mcp"], "refs": ["field-lessons 12"], "hits": 1},
+    {"id": "AS-023", "name": "client-supplied-cooldown", "aliases": ["omit lastExecuteAtMs"], "product_types": ["policy", "agent", "mcp"], "refs": ["field-lessons 13"], "hits": 1},
+    {"id": "AS-024", "name": "zero-address-erc4626-receiver", "aliases": ["mint to 0x0"], "product_types": ["vault", "policy"], "refs": ["field-lessons 15"], "hits": 1},
+    {"id": "AS-025", "name": "dry-run-wrong-function", "aliases": ["simulate approve only", "withdraw as deposit"], "product_types": ["policy", "mcp", "agent"], "refs": ["field-lessons 14"], "hits": 1},
+    {"id": "AS-026", "name": "compose-workflow-mixup", "aliases": ["redeem builds deposit"], "product_types": ["policy", "mcp", "agent"], "refs": ["field-lessons 16"], "hits": 1},
+    {"id": "AS-027", "name": "ieee-number-cap-bypass", "aliases": ["Number() wei", "sci notation"], "product_types": ["policy", "agent"], "refs": ["field-lessons 18"], "hits": 1},
+    {"id": "AS-028", "name": "execute-idempotency-timestamp", "aliases": ["Date.now() idempotency"], "product_types": ["policy", "mcp", "agent"], "refs": ["field-lessons 17"], "hits": 1},
+    {"id": "AS-029", "name": "eip7702-delegator-as-vote", "aliases": ["metamask delegator extra vote"], "product_types": ["any"], "refs": ["field-lessons 10"], "hits": 1, "trust_finding_default": true},
+    {"id": "AS-030", "name": "secret-leak-in-errors", "aliases": ["api key prefix"], "product_types": ["policy", "mcp", "agent"], "refs": ["field-lessons 19"], "hits": 1}
+  ]
+}

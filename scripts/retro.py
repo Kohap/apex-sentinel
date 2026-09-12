@@ -132,6 +132,10 @@ def main():
     a = p.parse_args()
 
     BRAIN.mkdir(exist_ok=True)
+    init = Path(__file__).resolve().parent / "init_brain.py"
+    if init.exists():
+        import subprocess
+        subprocess.run([sys.executable, str(init), "--brain", str(BRAIN)], check=False)
     if a.fp:
         if not (a.pattern and a.why):
             fail("--fp needs --pattern and --why")

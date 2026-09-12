@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
-# Apex Sentinel freshness engine.
+# Apex Sentinel freshness engine (v1.2).
 #
-# Updates every skill tracked in ~/.apex-sentinel/upstreams.json from its upstream repo:
-#   - installs that are git clones : stash local edits -> fast-forward pull -> restore
-#   - plain-copy installs          : rsync --delete from a fresh upstream clone,
-#                                    previous version backed up to <dir>.bak-<date>/
-# Special case: "bug-ai-auditor" directories get their SKILL.md / agents/openai.yaml
-# from the newest commit that still carried the bug-ai-auditor identity (the upstream
-# repo later renamed its SKILL.md to jailbreaker).
+# Updates every skill tracked in ~/.apex-sentinel/upstreams.json from its upstream
+# repo. Bootstraps the brain + manifest if missing. Works without rsync (cp -a).
+# Does NOT overwrite the intentional bug-ai-auditor routing stub.
 #
 # Usage:   update_check.sh [--dry-run]
 # Exit 0 on success (or nothing to do), 1 on any failed update.
 set -u
 
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRAIN="${APEX_BRAIN:-$HOME/.apex-sentinel}"
 MANIFEST="$BRAIN/upstreams.json"
 DRY=0
@@ -24,11 +21,30 @@ FAILURES=0
 
 command -v git >/dev/null || { echo "git required"; exit 1; }
 command -v python3 >/dev/null || { echo "python3 required"; exit 1; }
-command -v rsync >/dev/null || { echo "rsync required"; exit 1; }
 
-[ -f "$MANIFEST" ] || { echo "manifest missing: $MANIFEST"; exit 1; }
+copy_tree() {
+  # copy_tree SRC DEST  — replace DEST contents, keep DEST/.git if present
+  local SRC="$1" DEST="$2"
+  mkdir -p "$DEST"
+  local KEEP_GIT=""
+  if [ -d "$DEST/.git" ]; then
+    KEEP_GIT=$(mktemp -d)
+    mv "$DEST/.git" "$KEEP_GIT/.git"
+  fi
+  # delete dest files except we just moved .git
+  find "$DEST" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  cp -a "$SRC"/. "$DEST"/
+  rm -rf "$DEST/.git"
+  if [ -n "$KEEP_GIT" ]; then
+    mv "$KEEP_GIT/.git" "$DEST/.git"
+    rm -rf "$KEEP_GIT"
+  fi
+}
 
-# manifest -> lines of: url<TAB>branch<TAB>space-separated-installs
+# bootstrap brain + default manifest
+python3 "$HERE/init_brain.py" --brain "$BRAIN" || true
+[ -f "$MANIFEST" ] || { echo "manifest still missing after init: $MANIFEST"; exit 1; }
+
 LINES=$(python3 - "$MANIFEST" <<'PY'
 import json, sys, os
 m = json.load(open(sys.argv[1]))
@@ -46,14 +62,24 @@ while IFS=$'\t' read -r URL BRANCH INSTALLS; do
   git clone -q --depth 50 -b "$BRANCH" "$URL" "$SRC" 2>/dev/null \
     || { echo "  ERROR: clone failed (offline? bad branch?)"; FAILURES=$((FAILURES+1)); continue; }
   LOCAL_HEAD=$(git -C "$SRC" rev-parse --short HEAD)
-  # installs are \x1f-separated (paths may contain spaces); %b\n ensures the
-  # final path still terminates as a readable line for the `while read` below
   printf '%b\n' "$(printf '%s' "$INSTALLS" | tr '\037' '\n')" | while IFS= read -r DEST; do
     [ -n "$DEST" ] || continue
     LABEL=${DEST/#$HOME/'~'}
+    # never clobber the intentional stub
+    if [ "$(basename "$DEST")" = "bug-ai-auditor" ]; then
+      echo "  skip stub: $LABEL (bug-ai-auditor is a routing stub; not overwritten)"
+      continue
+    fi
+    # preserve SOURCE.md across copy installs
+    SAVE_SRC=""
+    if [ -f "$DEST/SOURCE.md" ]; then
+      SAVE_SRC=$(mktemp)
+      cp "$DEST/SOURCE.md" "$SAVE_SRC"
+    fi
     if [ ! -d "$DEST" ]; then
-      echo "  NEW install -> $LABEL"
-      [ "$DRY" = 0 ] && { mkdir -p "$(dirname "$DEST")"; rsync -a --exclude '.git/' "$SRC/" "$DEST/"; }
+      echo "  NEW install -> $LABEL (head $LOCAL_HEAD)"
+      [ "$DRY" = 0 ] && { mkdir -p "$(dirname "$DEST")"; cp -a "$SRC"/. "$DEST"/; rm -rf "$DEST/.git"; }
+      [ -n "$SAVE_SRC" ] && [ "$DRY" = 0 ] && mv "$SAVE_SRC" "$DEST/SOURCE.md"
       continue
     fi
     if [ -d "$DEST/.git" ]; then
@@ -73,24 +99,12 @@ while IFS=$'\t' read -r URL BRANCH INSTALLS; do
     else
       echo "  syncing copy -> $LABEL (backup: $LABEL.bak-$DATE/)"
       [ "$DRY" = 1 ] && continue
-      mkdir -p "$DEST"
-      rsync -a --delete --exclude '.git/' \
-            --backup --backup-dir="$DEST.bak-$DATE" "$SRC/" "$DEST/"
+      mkdir -p "$DEST.bak-$DATE"
+      cp -a "$DEST"/. "$DEST.bak-$DATE"/ 2>/dev/null || true
+      copy_tree "$SRC" "$DEST"
+      [ -n "$SAVE_SRC" ] && cp "$SAVE_SRC" "$DEST/SOURCE.md"
     fi
-  done
-  # bug-ai-auditor identity repair
-  printf '%s' "$INSTALLS" | tr '\037' '\n' | grep '/bug-ai-auditor$' | while IFS= read -r DEST; do    [ -d "$DEST" ] || continue
-    SHA=""
-    for C in $(git -C "$SRC" log --format=%h -- SKILL.md); do
-      N=$(git -C "$SRC" show "$C":SKILL.md 2>/dev/null | sed -n 's/^name:[[:space:]]*//p' | head -1)
-      if [ "$N" = "bug-ai-auditor" ]; then SHA="$C"; break; fi
-    done
-    [ -n "$SHA" ] || continue
-    [ "$DRY" = 0 ] && {
-      git -C "$SRC" show "$SHA":SKILL.md > "$DEST/SKILL.md"
-      git -C "$SRC" show "$SHA":agents/openai.yaml > "$DEST/agents/openai.yaml" 2>/dev/null
-      echo "  restored bug-ai-auditor identity in ${DEST/#$HOME/'~'} (from $SHA)"
-    }
+    [ -n "$SAVE_SRC" ] && rm -f "$SAVE_SRC"
   done
 done <<< "$LINES"
 
@@ -102,9 +116,14 @@ from datetime import date
 from pathlib import Path
 p = Path(sys.argv[1]); m = json.loads(p.read_text())
 m["last_checked"] = date.today().isoformat()
-p.write_text(json.dumps(m, indent=2))
+p.write_text(json.dumps(m, indent=2) + "\n")
 print(f"manifest updated: last_checked={m['last_checked']}")
 PY
+
+# mirrors of Apex itself
+if [ -x "$HERE/sync_mirrors.sh" ]; then
+  bash "$HERE/sync_mirrors.sh" || true
+fi
 
 echo "== done ($FAILURES failure(s)) =="
 exit $((FAILURES > 0))

@@ -1,0 +1,55 @@
+{
+  "last_checked": null,
+  "repos": [
+    {
+      "name": "apex-sentinel",
+      "url": "https://github.com/Kohap/apex-sentinel.git",
+      "branch": "main",
+      "installs": [
+        "/workspace/.grok/skills/apex-sentinel",
+        "~/.grok/skills/apex-sentinel",
+        "~/.claude/skills/apex-sentinel"
+      ]
+    },
+    {
+      "name": "ragnarok",
+      "url": "https://github.com/Godwin-web3/ragnarok.git",
+      "branch": "master",
+      "installs": [
+        "/workspace/.grok/skills/ragnarok",
+        "~/.grok/skills/ragnarok",
+        "~/.claude/skills/ragnarok"
+      ]
+    },
+    {
+      "name": "kensho",
+      "url": "https://github.com/cryptoduke01/kensho.git",
+      "branch": "main",
+      "installs": [
+        "/workspace/.grok/skills/kensho",
+        "~/.grok/skills/kensho",
+        "~/.claude/skills/kensho"
+      ]
+    },
+    {
+      "name": "iykes-evm-bughunt-skill",
+      "url": "https://github.com/devIykee/iykes-evm-bughunt-skill.git",
+      "branch": "main",
+      "installs": [
+        "/workspace/.grok/skills/iykes-web3-bughunt-skill",
+        "~/.claude/skills/iykes-web3-bughunt-skill"
+      ]
+    },
+    {
+      "name": "viktor-blackhat",
+      "url": "https://github.com/v1ktorrr0x/viktor-blackhat.git",
+      "branch": "main",
+      "installs": [
+        "/workspace/.grok/skills/viktor-blackhat",
+        "/workspace/.grok/skills/jailbreaker",
+        "~/.claude/skills/viktor-blackhat",
+        "~/.codex/skills/jailbreaker"
+      ]
+    }
+  ]
+}

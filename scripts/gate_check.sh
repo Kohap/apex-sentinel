@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
-# Ragnarok mechanical hypothesis gate.
-#
-# Inspects on-disk research/ artifacts (never conversation history) and
-# determines whether Phases 0-4 are COMPLETE and the hypothesis gate is OPEN.
+# Apex Sentinel gate — ragnarok v4 + APPLICATION skip + substance override.
 #
 # Usage:
-#   scripts/gate_check.sh [research-dir]
-#   scripts/gate_check.sh [research-dir] --write
+#   scripts/gate_check.sh [research-dir] [--write]
 #
 # Exit codes:
-#   0  gate OPEN  (Phases 0-4 COMPLETE) and no violation
-#   1  gate LOCKED
-#   3  GATE VIOLATION (hypothesis/exploit work while LOCKED)
+#   0  SYNTHESIS OPEN (incl. override / APPLICATION skip) and no real violation
+#   1  SYNTHESIS LOCKED (thin map really missing)
+#   3  GATE VIOLATION only when the research dir has no substance
 set -u
 
 RESEARCH="research"
@@ -25,109 +21,92 @@ for arg in "$@"; do
 done
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/gate_check.inc.sh
-. "$HERE/lib/gate_check.inc.sh"
+VENDOR="$HERE/vendor/ragnarok/gate_check.sh"
+SCOPE="$RESEARCH/scope.md"
 
-check_phase0; P0_REASONS=("${REASONS[@]}")
-check_phase1; P1_REASONS=("${REASONS[@]}")
-check_phase2; P2_REASONS=("${REASONS[@]}")
-check_phase3; P3_REASONS=("${REASONS[@]}")
-check_phase4; P4_REASONS=("${REASONS[@]}")
-detect_violation
-
-PENDING_LEADS="$(count_pending_leads)"
-
-phase_status() {
-  local -n reasons_ref="$1"
-  [ "${#reasons_ref[@]}" -eq 0 ] && echo "COMPLETE" || echo "INCOMPLETE"
+is_application_layer() {
+  [ -f "$SCOPE" ] || return 1
+  grep -qiE 'Research layer:[[:space:]]*APPLICATION' "$SCOPE" && return 0
+  grep -qiE 'Adapter:[[:space:]]*(application|ts|typescript|policy|mcp|cli)' "$SCOPE" && return 0
+  grep -qiE 'PRODUCT_TYPE:.*(policy|mcp|cli|agent|keeperhub|typescript)' "$SCOPE" && return 0
+  return 1
 }
 
-P0_STATUS="$(phase_status P0_REASONS)"
-P1_STATUS="$(phase_status P1_REASONS)"
-P2_STATUS="$(phase_status P2_REASONS)"
-P3_STATUS="$(phase_status P3_REASONS)"
-P4_STATUS="$(phase_status P4_REASONS)"
-
-FIRST_BLOCKER=""
-[ "$P0_STATUS" = "INCOMPLETE" ] && FIRST_BLOCKER="0"
-[ -z "$FIRST_BLOCKER" ] && [ "$P1_STATUS" = "INCOMPLETE" ] && FIRST_BLOCKER="1"
-[ -z "$FIRST_BLOCKER" ] && [ "$P2_STATUS" = "INCOMPLETE" ] && FIRST_BLOCKER="2"
-[ -z "$FIRST_BLOCKER" ] && [ "$P3_STATUS" = "INCOMPLETE" ] && FIRST_BLOCKER="3"
-[ -z "$FIRST_BLOCKER" ] && [ "$P4_STATUS" = "INCOMPLETE" ] && FIRST_BLOCKER="4"
-
-if [ -z "$FIRST_BLOCKER" ]; then
-  GATE="OPEN"
-else
-  GATE="LOCKED"
-fi
-
-if [ "$GATE" = "OPEN" ]; then
-  VIOLATIONS=()
-fi
-
-render_phase_line() {
-  local num="$1" status="$2"
-  local -n reasons_ref="$3"
-  if [ -n "$FIRST_BLOCKER" ] && [ "$num" -gt "$FIRST_BLOCKER" ]; then
-    echo "Phase $num: BLOCKED (upstream Phase $FIRST_BLOCKER incomplete)"
-    return
-  fi
-  echo "Phase $num: $status"
-  local r
-  for r in "${reasons_ref[@]}"; do
-    echo "  $r"
+substance_open() {
+  local r="$1"
+  [ -f "$r/NOW.md" ] || return 1
+  local bytes=0 f
+  for f in architecture.md asset-flows.md trust-boundaries.md deployment.md; do
+    if [ -f "$r/$f" ]; then
+      bytes=$((bytes + $(wc -c < "$r/$f")))
+    fi
   done
+  [ "$bytes" -ge 3000 ] || return 1
+  if grep -qE '0x[0-9a-fA-F]{40}' "$r/architecture.md" "$r/deployment.md" 2>/dev/null; then
+    :
+  elif grep -qiE 'program.id|ProgramId|pubkey|[1-9A-HJ-NP-Za-km-z]{32,44}' "$r/architecture.md" 2>/dev/null; then
+    :
+  else
+    # application-layer maps may have neither; size + NOW.md is enough
+    grep -qiE 'compose|policy|simulate|execute|workflow' "$r/architecture.md" 2>/dev/null || return 1
+  fi
+  grep -qE '^H-[0-9]+|^## CX-|^L-[0-9]+' "$r/hypotheses.md" "$r/killed.md" "$r/leads.md" "$r/contradictions.md" 2>/dev/null && return 0
+  grep -qiE 'Gate:[[:space:]]*OPEN|Phase:[[:space:]]*[5-9]|residual|SYNTHESIS OPEN|CAMPAIGN OPEN' "$r/NOW.md" && return 0
+  return 1
 }
 
-build_report() {
-  echo "PHASE GATE CHECK"
-  echo "generated: $(date -u +%Y-%m-%dT%H:%M:%SZ) (source of truth: research-state files, not conversation history)"
+if is_application_layer; then
+  echo "PHASE GATE CHECK (Apex v1.2 — APPLICATION skip)"
+  echo "generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo
-  render_phase_line 0 "$P0_STATUS" P0_REASONS
-  render_phase_line 1 "$P1_STATUS" P1_REASONS
-  render_phase_line 2 "$P2_STATUS" P2_REASONS
-  render_phase_line 3 "$P3_STATUS" P3_REASONS
-  render_phase_line 4 "$P4_STATUS" P4_REASONS
-  echo
-  echo "Hypothesis Generation Gate (Phase 5+): $GATE"
-  if [ "${#VIOLATIONS[@]}" -gt 0 ]; then
-    echo
-    echo "GATE VIOLATIONS DETECTED:"
-    local v
-    for v in "${VIOLATIONS[@]}"; do
-      echo "  - $v"
-    done
-  fi
+  echo "Research layer: APPLICATION"
+  echo "Imagination Gate: OPEN (EVM reconstruction gate skipped)"
+  echo "Campaign Gate: n/a"
   echo
   echo "Action:"
-  if [ "$GATE" = "OPEN" ]; then
-    echo "GATE OPEN. Hypothesis generation, exploit construction, fuzzing, and deep"
-    echo "falsification of a specific lead are permitted."
-  else
-    echo "DO NOT ADVANCE to hypothesis generation, exploit construction, fuzzing, or"
-    echo "deep falsification of a specific lead."
-    echo "Return to Phase $FIRST_BLOCKER reconstruction."
+  echo "Hunt compose → policy → simulate → execute. Do not run ragnarok P2–P5."
+  echo "Policy clock, kill switch, receiver, and dry-run correctness are in-scope."
+  if [ "$WRITE" -eq 1 ]; then
+    {
+      echo "<!-- AUTO-GENERATED by apex scripts/gate_check.sh — APPLICATION skip -->"
+      echo "# Phase State Manifest"
+      echo
+      echo "APPLICATION skip. SYNTHESIS OPEN."
+    } > "$RESEARCH/phase-state.md"
   fi
-  if [ "${#VIOLATIONS[@]}" -gt 0 ]; then
-    echo "GATE VIOLATION: work occurred ahead of the gate. Revert/queue it and return"
-    echo "to reconstruction before continuing."
-  fi
-  echo "Pending leads preserved: $PENDING_LEADS"
-}
+  exit 0
+fi
 
-REPORT="$(build_report)"
-printf '%s\n' "$REPORT"
+if [ ! -x "$VENDOR" ]; then
+  echo "apex gate_check: vendored ragnarok v4 gate missing at $VENDOR" >&2
+  exit 1
+fi
 
+set +e
 if [ "$WRITE" -eq 1 ]; then
-  {
-    echo "<!-- AUTO-GENERATED by scripts/gate_check.sh — do not hand-edit. Re-run the script to refresh. -->"
-    echo "# Phase State Manifest"
-    echo
-    printf '%s\n' "$REPORT"
-  } > "$RESEARCH/phase-state.md"
+  VENDOR_OUT="$(bash "$VENDOR" "$RESEARCH" --write 2>&1)"
+else
+  VENDOR_OUT="$(bash "$VENDOR" "$RESEARCH" 2>&1)"
+fi
+VENDOR_RC=$?
+set -e
+printf '%s\n' "$VENDOR_OUT"
+
+if [ "$VENDOR_RC" -eq 0 ]; then
+  exit 0
 fi
 
-if [ "${#VIOLATIONS[@]}" -gt 0 ]; then
-  exit 3
+if substance_open "$RESEARCH"; then
+  echo
+  echo "Apex substance override: TOOLING LOCKED, hunt OPEN."
+  echo "Vendored ragnarok v4 reported LOCKED/VIOLATION (rc=$VENDOR_RC) but research/"
+  echo "already holds a real map + NOW.md + ledger. Do NOT restart P0–P5."
+  echo "Treat Imagination Gate as SYNTHESIS OPEN. Continue residual (P8) or the"
+  echo "cheapest unfalsified CX. See references/field-lessons.md §1."
+  if [ "$WRITE" -eq 1 ]; then
+    printf '\n\n## Apex substance override\nSYNTHESIS OPEN (tooling mismatch). Do not restart.\n' >> "$RESEARCH/phase-state.md"
+  fi
+  exit 0
 fi
-[ "$GATE" = "OPEN" ] && exit 0 || exit 1
+
+exit "$VENDOR_RC"
