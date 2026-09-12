@@ -88,3 +88,15 @@ Confirmed and patched (repo `Kohap/keeperhub-sky-exec` @ `3798594`):
 - Test-only remnants (Umia H-014 on V1/V2/V4 test ventures).
 - `winningThreshold` 2% that still needs `marketCreationSigner` (L-041).
 - Org Turnkey EOA compromise (KeeperHub) — TRUST.
+
+
+## Component use (v1.3)
+
+24. **Naming a skill is not using it.** Apex 1.2 routed to jailbreaker / iykes /
+    kensho in a table and the operator improvised from memory. False positives
+    and fabricated reports follow. v1.3: `load_card.sh` → load that file →
+    produce the artifact → `component_check.py` / `claim_gate.py`.
+25. **P7 skipped = FP shipped.** Jailbreaker six gates, iykes 5, kensho 5.5,
+    and quoted brain FPs all belong in `fp-kill.md`. "I killed it in chat" is
+    not a kill attempt.
+26. **CONFIRMED without a harness is SOURCE**, not RUNTIME. claim_gate fails it.

@@ -23,4 +23,19 @@ EOF
 fi
 echo
 echo "Apex: after a thin map, run:  $HERE/gate_check.sh $TARGET/research"
+
+RES="$TARGET/research"
+HERE_DEFAULTS="$HERE/defaults"
+for dst in handshake.md fp-kill.md; do
+  if [ ! -f "$RES/$dst" ] && [ -f "$HERE_DEFAULTS/$dst" ]; then
+    cp "$HERE_DEFAULTS/$dst" "$RES/$dst"
+  fi
+done
+for f in intake.md recon.md auth-triage.md; do
+  if [ ! -f "$RES/$f" ]; then
+    printf "# %s\n\n(artifact-or-it-did-not-happen — fill from the owning component)\n" "${f%.md}" > "$RES/$f"
+  fi
+done
+echo "Apex: each phase:             $HERE/load_card.sh P#"
+echo "Apex: before any finding:     python3 $HERE/claim_gate.py $TARGET/research"
 echo "Apex: APPLICATION targets: set Research layer: APPLICATION in scope.md"

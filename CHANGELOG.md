@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.3.0 — 2026-09-12
+
+Stop hallucinated component use and false-positive reports.
+
+Apex 1.2 named five owners and then let the model improvise. False reports
+shipped when jailbreaker / iykes / kensho never wrote an artifact. v1.3 makes
+**artifact-or-it-didn't-happen** mechanical.
+
+- `references/handshake.md` — load card per phase (exact file from the owning skill)
+- `references/anti-hallucination.md` — never-cite-unread, never TRUST-as-JACKPOT
+- `scripts/load_card.sh P#` — prints the one-phase load list
+- `scripts/component_check.py` — FAIL if a required owner has no artifact
+- `scripts/claim_gate.py` — CONFIRMED-REPORTABLE needs `fp-kill.md` (jailbreaker
+  six gates + iykes 5 + kensho 5.5 + brain FPs + kill mutations + permissionless YES)
+- `scripts/report_gate.sh` wraps ragnarok report_gate + claim_gate + handshake
+- `scripts/defaults/fp-kill.md` + `handshake.md` copied by scaffold
+- Verdict vocabulary: FALSE POSITIVE | NEEDS MORE WORK | SURVIVOR | TRUST |
+  CONFIRMED-INTERNAL | CONFIRMED-REPORTABLE
+- Honest empty `report.md` still PASSes. A finding without the gauntlet FAILS.
+
+
 ## 1.2.0 — 2026-09-12
 
 Field update after Umia (Base TGE, residual OPEN, no permissionless JACKPOT),

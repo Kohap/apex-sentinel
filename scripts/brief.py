@@ -54,10 +54,12 @@ def main():
     brain = Path(a.brain).expanduser()
     bootstrap(brain)
 
-    print(f"# APEX SENTINEL BRIEF — {date.today().isoformat()} (v1.2.0)")
+    print(f"# APEX SENTINEL BRIEF — {date.today().isoformat()} (v1.3.0)")
     print(f"\nLayer: {a.layer}. Ragnarok: v4 (SYNTHESIS OPEN after thin map).")
     print("Intent: 'investigate X' / 'keep hunting' after OPEN = residual P8, not a new P0.")
     print("'audit skill' = Apex Sentinel, not the bug-ai-auditor stub.")
+    print("Handshake: load_card.sh P# → load those files → produce the artifact.")
+    print("P7 gauntlet (jailbreaker + iykes + kensho + brain) is blocking. claim_gate.py before report.md.")
     if a.layer == "APPLICATION":
         print("APPLICATION: skip EVM reconstruction gate. Hunt compose → policy → simulate → execute.")
         print("Check AS-022..AS-028, AS-030 first (kill switch, cooldown, 0x0 receiver, wrong dry-run).")

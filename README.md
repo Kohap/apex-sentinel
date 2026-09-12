@@ -3,8 +3,8 @@
 Unified self-learning Web3 audit engine. Orchestrates kensho + ragnarok v4 +
 jailbreaker + iykes-web3-bughunt. The `bug-ai-auditor` slot is a routing stub.
 
-**v1.2.0** — field update 2026-09-12. See `CHANGELOG.md` and
-`references/field-lessons.md`.
+**v1.3.0** — component handshake + claim gate. See `CHANGELOG.md`,
+`references/handshake.md`, `references/anti-hallucination.md`.
 
 ## Install
 
@@ -19,6 +19,8 @@ Then:
 ```bash
 python3 scripts/init_brain.py
 python3 scripts/brief.py --product-type vault
+bash scripts/load_card.sh P7              # load those files; do not improvise
+python3 scripts/claim_gate.py research/   # blocks false CONFIRMED
 ```
 
 The brain lives at `~/.apex-sentinel/` (outside the skill dir so updates never

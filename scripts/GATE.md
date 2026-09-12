@@ -24,3 +24,8 @@ Exit codes (wrapper): 0 SYNTHESIS OPEN (including override / APPLICATION skip),
 no substance on disk.
 
 Do not treat a v2-era "hypothesis gate LOCKED" as a hunt restart.
+
+v1.3 also runs `component_check.py` and `claim_gate.py` inside `report_gate.sh`.
+A finding with no `fp-kill.md` (jailbreaker six gates, iykes 5, kensho 5.5,
+quoted brain FPs) cannot ship. Naming a component in chat is not using it.
+

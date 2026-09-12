@@ -14,3 +14,6 @@ Check here FIRST during P7 falsification.
 | Decompiled bytecode function identity / invented keeper gate | Bytecode reversing is a hypothesis generator. Fork-replay the real selector. | 2026-08 | kensho 5.4.1 |
 | Safe `require(extcodesize(multisig)==0)` inverted as a live steal | Often the original stuck-funds cause, not an attacker primitive. | 2026-08 | kensho 5.7 |
 | SELFDESTRUCT hit in CBOR metadata trailer | Data, not code. | 2026-08 | kensho 5.7 |
+| Named a component skill in chat with no artifact on disk | Artifact-or-it-didn't-happen. load_card.sh then produce the file. | 2026-09-12 | apex 1.3 |
+| CONFIRMED / JACKPOT without fp-kill.md gauntlet | Jailbreaker six gates + iykes 5 + kensho 5.5 + brain FPs are blocking. | 2026-09-12 | apex 1.3 |
+| RUNTIME_VERIFIED because the code "would" do it | RUNTIME means a harness/`eth_call`/fork produced the transition. | 2026-09-12 | apex 1.3 |

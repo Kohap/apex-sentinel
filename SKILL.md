@@ -3,14 +3,15 @@ name: apex-sentinel
 description: >-
   Unified self-learning Web3 audit engine. Orchestrates kensho + ragnarok v4 +
   jailbreaker + bug-ai-auditor stub + iykes-web3-bughunt into one gated
-  engagement lifecycle, then learns from every audit via a persistent brain at
-  ~/.apex-sentinel/. Use when asked to "run apex", "apex sentinel", a full
-  audit, or any bug-hunt engagement. Short orders like "investigate X" or
-  "keep hunting" after a hunt is OPEN are residual dives, not a new P0.
+  engagement lifecycle with a component handshake and claim gate so findings
+  cannot ship unless the owning skill actually ran. Use when asked to "run apex",
+  "apex sentinel", a full audit, or any bug-hunt engagement. Short orders like
+  "investigate X" or "keep hunting" after OPEN are residual dives, not a new P0.
 metadata:
-  version: 1.2.0
+  version: 1.3.0
   created: 2026-08-24
   updated: 2026-09-12
+  claim_gate: scripts/claim_gate.py
   author: Gift (https://github.com/Kohap)
   copyright: "Copyright (c) 2026 Gift. All rights reserved. See LICENSE."
   components: [kensho, ragnarok, jailbreaker, bug-ai-auditor, iykes-web3-bughunt-skill]
@@ -70,6 +71,38 @@ is the only loader — Grok loads `.grok/skills/`.
 | Mechanical recon tools (step1–7, 9–10), coverage.md, dual-ledger vault hunt | **iykes-web3-bughunt-skill** | step4 from `0xdead` |
 | Rust/Solana consensus | **kensho** Part 10 | |
 
+
+## Component handshake (v1.3 — this is how you use a skill)
+
+A component that is only named in chat was **not used**. Artifact-or-it-didn't-happen.
+
+Full table: `references/handshake.md`. Never list: `references/anti-hallucination.md`.
+
+At every phase:
+
+```
+bash "$APEX/scripts/load_card.sh" P7
+# load ONLY those files (not the whole skill, not memory)
+# produce the artifact, tick research/handshake.md
+python3 "$APEX/scripts/component_check.py" research/
+```
+
+| Claim in chat | Required on disk or it is a hallucination |
+|---|---|
+| ran iykes auth triage | `research/auth-triage.md` (per-sig guarded/OPEN) |
+| used jailbreaker / killed FPs | `research/fp-kill.md` section with six gates answered |
+| kensho quality gate | five §5.5 answers in that section |
+| checked the brain | quoted rows from `~/.apex-sentinel/false-positives.md` |
+| fork PoC / RUNTIME | file under `research/experiments/` that ran |
+| permissionless Critical | `PERMISSIONLESS: YES` + `claim_gate.py` PASS |
+
+P7 is **not optional**. Jailbreaker + iykes second-opinion + kensho §5.5 + brain FPs
++ ragnarok `kill.md` all write into the **same** `fp-kill.md` section. Skipping any
+owner is how false positives ship.
+
+P9: `claim_gate.py` then `report_gate.sh`. CONFIRMED without a passing claim gate
+does not exist.
+
 ## The Brain (`~/.apex-sentinel/`)
 
 Persistent, global, outside all skill dirs so updates never clobber learned state.
@@ -128,6 +161,11 @@ scripts fall back to `cp -a` (Grok sandbox has no rsync).
     close. Do not fabricate a finding to fill a report.
 12. **Ledger hygiene:** append-only on `killed.md` / `leads.md` / `hypotheses.md`. Never
     overwrite a ledger with empty `StrReplace`. Disk is memory. Conversation is not.
+13. **Artifact-or-it-didn't-happen.** Did not load the file / run the tool this session
+    → do not cite it. Conversation is not evidence.
+14. **P7 gauntlet is blocking.** No `fp-kill.md` section → the finding is not CONFIRMED.
+15. **claim_gate.py PASS** before any finding enters `report.md`. Honest empty is the
+    only legal alternative.
 
 ## UNIFIED LIFECYCLE
 
@@ -190,17 +228,35 @@ them — they are not a prerequisite for the first probe.
 ### P6 — Composition · Temporal · Economic  *(ragnarok 08–10)*
 Pairing pass; state-machine; THEN economic validation. No severity before this.
 
-### P7 — Falsification & FP kill  *(jailbreaker + iykes second-opinion)*
-Assume the finding is wrong. Check `false-positives.md` first. 5-question gate →
-CONFIRMED / FALSE POSITIVE / NEEDS MORE WORK.
+### P7 — Falsification & FP kill  *(jailbreaker + iykes + kensho + brain — ALL of them)*
+`bash "$APEX/scripts/load_card.sh" P7` and load those files. Copy
+`scripts/defaults/fp-kill.md` into `research/fp-kill.md`. One section per live H-###.
+
+Assume the finding is wrong. Fill, do not summarize:
+- Jailbreaker six gates (Process, Reachability, Real Impact, PoC, Math, Environment)
+- Iykes 5-question second-opinion
+- Kensho §5.5 quality gate
+- Quoted brain FP rows (or "none matched" + date)
+- Ragnarok `kill.md` mutation table
+
+Verdict vocabulary (do not invent labels): FALSE POSITIVE | NEEDS MORE WORK |
+SURVIVOR | TRUST | CONFIRMED-INTERNAL | CONFIRMED-REPORTABLE.
+
+Unanswered line = the claim is not CONFIRMED. "I used jailbreaker internally" is a
+hallucination.
 
 ### P8 — Expansion, novelty, residual  *(ragnarok 12–14)*
 Expand survivors into primitive families. Revisit SELF_RESOLVED. Short user orders
 ("investigate X") land here when the hunt is already OPEN.
 
-### P9 — Rate · Report  *(kensho 7–8 + iykes 8–9)*
-CONFIRMED findings only in `report.md`. Everything else in `final.md`. Honest empty
-report is valid.
+### P9 — Rate · Report  *(kensho 7–8 + iykes 8–9 + claim_gate)*
+```
+python3 "$APEX/scripts/component_check.py" research/
+python3 "$APEX/scripts/claim_gate.py" research/
+bash "$APEX/scripts/report_gate.sh" research/
+```
+CONFIRMED-REPORTABLE only in `report.md`. Everything else in `final.md`. Honest empty
+report is valid. Any FAIL → do not disclose.
 
 #### REPORTABILITY GATE (hard filter before P10)
 Only findings that pass ALL of the following leave the workspace:
@@ -249,12 +305,14 @@ Skipping SYNTHESIS OPEN to write architecture novels · treating CAMPAIGN LOCKED
 heading-regex LOCKED as "restart P0" · reporting SOURCE-level findings as confirmed ·
 treating admin / 1-step Ownable EOA / Safe M-of-N / EIP-7702 delegator as permissionless
 exploit · claiming temporary manip as persistent theft · implying full audit under low
-coverage · routing "audit skill" to the stub · re-running phases another component owns ·
+coverage · routing "audit skill" to the stub · **naming a component without producing its
+artifact** · **CONFIRMED without fp-kill.md** · re-running phases another component owns ·
 fabricating a finding to fill a report · closing without Phase R · trusting conversation
 over disk · overwriting killed.md/leads.md · guessing security@ inboxes · public discussion
-of live bugs · using `Number()` for wei caps · letting a client `killSwitch:false` override
-a server kill switch · defaulting ERC-4626 `receiver` to `0x0` · dry-running the wrong
-function · `false ?? env` / client-supplied cooldown as the policy clock.
+of live bugs · citing unread files / unrun tools · using `Number()` for wei caps · letting
+a client `killSwitch:false` override a server kill switch · defaulting ERC-4626 `receiver`
+to `0x0` · dry-running the wrong function · `false ?? env` / client-supplied cooldown as
+the policy clock.
 
 ## Quick start
 
@@ -262,6 +320,9 @@ function · `false ?? env` / client-supplied cooldown as the policy clock.
 APEX=$(dirname "$(readlink -f "$0")")   # or scripts/resolve_skill.sh apex-sentinel
 python3 $APEX/scripts/init_brain.py
 python3 $APEX/scripts/brief.py --product-type vault
-# P0→P10, routing depth to component skills
+# each phase:  bash $APEX/scripts/load_card.sh P#
+#              load those files, produce the artifact, tick handshake.md
+# P7: fill research/fp-kill.md from scripts/defaults/fp-kill.md
+# P9: component_check.py && claim_gate.py && report_gate.sh
 # End every engagement with retro.py
 ```
