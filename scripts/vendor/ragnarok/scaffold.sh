@@ -13,7 +13,6 @@ for f in \
   assumptions.md \
   representations.md \
   contradictions.md \
-  coverage.md \
   killed.md \
   survivors.md \
   final.md; do

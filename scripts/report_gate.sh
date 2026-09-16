@@ -24,11 +24,7 @@ CG_RC=$?
 echo
 echo "== ragnarok report_gate =="
 if [ -x "$VENDOR" ]; then
-  if [ "$WRITE" -eq 1 ]; then
-    bash "$VENDOR" "$RESEARCH" --write
-  else
-    bash "$VENDOR" "$RESEARCH"
-  fi
+  bash "$VENDOR" "$RESEARCH"
   RG_RC=$?
 else
   echo "apex report_gate: vendor missing at $VENDOR" >&2
@@ -36,6 +32,23 @@ else
 fi
 
 echo
+STATUS=PASS
+if [ "$CC_RC" -ne 0 ] || [ "$CG_RC" -ne 0 ] || [ "$RG_RC" -ne 0 ]; then
+  STATUS=FAIL
+fi
+if [ "$WRITE" -eq 1 ]; then
+  if [ ! -d "$RESEARCH" ]; then
+    echo "Cannot write aggregate report state: research directory does not exist" >&2
+    exit 1
+  fi
+  {
+    echo "# Apex aggregate report gate"
+    echo
+    echo "Report gate: $STATUS"
+    echo "component=$CC_RC claim=$CG_RC ragnarok=$RG_RC"
+    echo "This is a legacy format check. Use apex audit for captured runtime evidence."
+  } > "$RESEARCH/report-state.md"
+fi
 if [ "$CC_RC" -ne 0 ] || [ "$CG_RC" -ne 0 ] || [ "$RG_RC" -ne 0 ]; then
   echo "APEX REPORT GATE FAIL (component=$CC_RC claim=$CG_RC ragnarok=$RG_RC)"
   echo "Do not disclose. Finish fp-kill.md / handshake / harness, or keep the honest empty report."

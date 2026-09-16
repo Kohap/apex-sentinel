@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.0 — 2026-09-16
+
+Convert Apex into a local repository audit agent powered by Codex CLI.
+
+- Add `apex audit`, `resume`, `status`, `report`, and `doctor` commands.
+- Add source snapshots, bounded explore/verify rounds, captured command evidence,
+  structured finding validation, actionable repair reports, and persistent run state.
+- Separate confirmed findings from unverified leads; preserve partial and blocked
+  outcomes rather than reporting completion from an empty scaffold.
+- Fix legacy six-gate validation, missing-input handling, per-finding evidence labels,
+  aggregate report-state output, reportable-status compatibility, and coverage scaffolding.
+- Include the original v1.3.1 review and reproductions, migration guidance, a synthetic
+  invoice target, automated tests, and macOS/Linux CI.
+- Archive the v1 skill and make the main skill entrypoint route to the agent.
+- Document that live Codex smoke testing was blocked by the enclosing macOS sandbox;
+  no successful end-to-end model-driven audit is claimed for this validation run.
+
 ## 1.3.1 — 2026-09-12
 
 Operator card so the human can actually drive Apex.

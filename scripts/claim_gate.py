@@ -94,15 +94,19 @@ def verdict(sec: str) -> str:
 
 
 def jail_all_pass(sec: str) -> bool:
-    # Every gate name appears, and no FAIL on those rows if a table exists.
     if has_all(sec, JAIL_GATES):
-        # fail if a gate row explicitly says FAIL
-        for g in JAIL_GATES:
-            if re.search(rf"{re.escape(g)}\s*\|\s*FAIL\b", sec, re.I):
-                return False
-        # require at least one PASS
-        return bool(re.search(r"\|\s*PASS\b", sec, re.I))
-    return False
+        return False
+    for gate in JAIL_GATES:
+        rows = re.findall(
+            rf"^\s*\|?\s*{re.escape(gate)}\s*\|\s*([^|\n]+)\|([^\n]*)$",
+            sec, re.I | re.M,
+        )
+        if len(rows) != 1:
+            return False
+        result, evidence = rows[0]
+        if result.strip().upper() != "PASS" or not evidence.strip(" |\t"):
+            return False
+    return True
 
 
 def main() -> int:
@@ -113,6 +117,11 @@ def main() -> int:
     fp = research / "fp-kill.md"
     killed = research / "killed.md"
     exps = research / "experiments"
+
+    missing = [str(p) for p in (report, hypo) if not p.is_file()]
+    if missing:
+        print("CLAIM GATE FAIL — required input missing: " + ", ".join(missing))
+        return 1
 
     report_txt = read(report)
     hypo_txt = read(hypo)
@@ -137,12 +146,22 @@ def main() -> int:
 
     # Honest empty + no CONFIRMED rows: PASS (still warn if fp-kill never started)
     if honest and not finding_sections and not confirmed_ids:
+        missing_close = [name for name in ("coverage.md", "final.md")
+                         if not nonempty(research / name, 40)]
+        if missing_close or not re.search(r"\|\s*DONE\s*\|?\s*$", read(research / "handshake.md"), re.M):
+            print("CLAIM GATE FAIL — audit incomplete: coverage.md, final.md, and completed handshake evidence are required.")
+            return 1
+        if reasons:
+            print("CLAIM GATE FAIL — " + "; ".join(reasons))
+            return 1
         print("CLAIM GATE PASS — honest empty report, no CONFIRMED rows.")
         print("Nothing to claim. Do not fabricate a finding to fill the report.")
         return 0
 
     if finding_sections and not confirmed_ids:
         reasons.append("report.md has finding sections but hypotheses.md has no CONFIRMED row")
+    if not honest and not finding_sections:
+        reasons.append("report.md has neither a supported finding nor an explicit no-finding result")
 
     if confirmed_ids and not nonempty(fp, 80):
         reasons.append("fp-kill.md missing/placeholder — jailbreaker/iykes/kensho gauntlet did not run")
@@ -176,9 +195,10 @@ def main() -> int:
             reasons.append(f"{hid}: trust/admin language without PERMISSIONLESS YES")
         if v and "CONFIRMED-REPORTABLE" not in v and "CONFIRMED" in v:
             reasons.append(f"{hid}: verdict {v} is not CONFIRMED-REPORTABLE")
-        if not re.search(r"RUNTIME_VERIFIED", hypo_txt):
+        row = next((line for line in hypo_txt.splitlines() if line.startswith(hid + " ") or line.startswith(hid + "|")), "")
+        if not re.search(r"RUNTIME_VERIFIED", row):
             reasons.append(f"{hid}: hypotheses.md CONFIRMED row missing RUNTIME_VERIFIED")
-        if not re.search(r"ECONOMICALLY_VERIFIED", hypo_txt):
+        if not re.search(r"ECONOMICALLY_VERIFIED", row):
             reasons.append(f"{hid}: hypotheses.md CONFIRMED row missing ECONOMICALLY_VERIFIED")
 
     if confirmed_ids:

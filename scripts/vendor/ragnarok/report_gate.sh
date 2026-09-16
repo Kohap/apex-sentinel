@@ -93,7 +93,7 @@ else
 
   CONFIRMED_ROWS=""
   if [ -f "$HYPO" ]; then
-    CONFIRMED_ROWS="$(grep -E '^H-[0-9]+ *\|' "$HYPO" | grep -iE '\|[[:space:]]*CONFIRMED[[:space:]]*$' || true)"
+    CONFIRMED_ROWS="$(grep -E '^H-[0-9]+ *\|' "$HYPO" | grep -iE '\|[[:space:]]*CONFIRMED(-REPORTABLE)?[[:space:]]*$' || true)"
   fi
   if [ -z "$CONFIRMED_ROWS" ]; then
     REASONS+=("hypotheses.md: no CONFIRMED row — report.md cannot carry a finding")
