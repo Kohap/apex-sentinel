@@ -80,7 +80,8 @@ def accept_round(state, payload, commands, workspace, phase, number):
         if not c["surface"].strip() or not c["details"].strip():
             raise ValueError("Coverage requires a surface and supporting detail")
         try:
-            path = contained(Path(workspace) / "source", c["file"])
+            cited = c["file"][7:] if c["file"].startswith("source/") else c["file"]
+            path = contained(Path(workspace) / "source", cited)
             if not path.is_file():
                 raise ValueError("not a file")
         except (ValueError, OSError):

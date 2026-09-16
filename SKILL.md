@@ -1,9 +1,16 @@
 ---
 name: apex-sentinel
-description: Run the Apex Sentinel local repository audit agent, inspect its evidence-backed findings, or resume an incomplete audit. Use for authorized repository security reviews and actionable repair reports.
+description: >-
+  Apex Sentinel v2 local audit agent (apex_agent). Invoke on: run apex, apex
+  sentinel, apex residual, apex audit, apex resume, apex doctor, audit skill,
+  full audit, web3 audit. Run the Apex Sentinel local repository audit agent,
+  inspect its evidence-backed findings, or resume an incomplete audit. Use for
+  authorized repository security reviews and actionable repair reports. Legacy
+  v1 hunt folders: load references/legacy-v1-skill.md; do not restart OPEN hunts.
 metadata:
-  version: 2.0.0
+  version: 2.0.1
   author: Gift (https://github.com/Kohap)
+  runtime: apex_agent
 ---
 
 # Apex Sentinel agent
@@ -24,9 +31,15 @@ The output directory must be outside the project. With the package installed,
 use `apex audit`, `apex resume`, `apex status`, and `apex report`.
 See README.md for installation, limits, and examples.
 
-Use the user's requested scope through `--focus`. Use their requested model through
-`--model`; otherwise keep the runtime default. Respect the run's configured time
-and round limits. Audit output is not permission to disclose or deploy changes.
+`--runtime auto` (default) uses Grok CLI when `grok` is installed and authenticated
+(`XAI_API_KEY` or `grok login`), otherwise Codex. Pass `--runtime grok` or
+`--runtime codex` to force one backend. Use `--model` for the selected CLI's model.
+Respect the run's configured time and round limits. Audit output is not permission
+to disclose or deploy changes.
+
+Do not claim a v2 COMPLETE_SCOPED audit without a real `apex audit` run.
+v2 still requires a local repository snapshot. Legacy v1 hunt folders
+(`hunts/*/research/NOW.md`) stay on v1 scripts when there is no official source.
 
 ## Interpret results
 

@@ -3,7 +3,7 @@
 **A local repository audit agent that turns suspected defects into reproducible findings and repair instructions.**
 
 Apex v2 controls an audit run: it copies a repository, investigates its code with
-Codex, creates and runs local tests, challenges its findings in a follow-up round,
+Grok or Codex, creates and runs local tests, challenges its findings in a follow-up round,
 and writes a structured report. It preserves progress so a bounded or interrupted
 run can continue later.
 
@@ -13,8 +13,9 @@ permissionless financial loss, or separately installed component skills.
 
 ## Quick start
 
-Requirements: macOS or Linux, Python 3.10+, Git, and a current Codex CLI with a
-working login. Model runs consume the usage available to that Codex account.
+Requirements: macOS or Linux, Python 3.10+, Git, and either a Grok CLI login
+(`@xai-official/grok`, `XAI_API_KEY` or `grok login`) or a Codex CLI login.
+Model runs consume the usage available to that account.
 
 ```sh
 git clone https://github.com/Kohap/apex-sentinel.git
@@ -22,9 +23,12 @@ cd apex-sentinel
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install .
-codex login
+# Grok (preferred when authenticated) or Codex
 apex doctor
 apex audit /path/to/your-project --output /path/to/new-audit
+# force a backend:
+apex audit /path/to/your-project --runtime grok --output /path/to/new-audit
+apex audit /path/to/your-project --runtime codex --output /path/to/new-audit
 ```
 
 The output must be a **new directory outside the project**. If omitted, Apex
@@ -39,8 +43,10 @@ apex status /path/to/audit
 apex report /path/to/audit
 ```
 
-`--model MODEL` selects a model on a new audit; otherwise Apex uses the Codex CLI
-default. `--codex /path/to/codex` selects the executable. Resume retains the original
+`--runtime auto` (default) uses Grok CLI when it is installed and authenticated,
+otherwise Codex. `--runtime grok` / `--runtime codex` force one backend.
+`--model MODEL` selects a model on a new audit; otherwise Apex uses that CLI's
+default. `--grok` / `--codex` select the executable. Resume retains the original
 model, snapshot, and scope. Time budgets and round counts apply to each invocation;
 they are not token or spending caps.
 
@@ -61,7 +67,8 @@ they are not token or spending caps.
 
 These are sequential rounds of one agent workflow, not a parallel agent swarm.
 The controller stores logs and state outside the agent's writable workspace.
-It invokes the supported [Codex non-interactive interface](https://learn.chatgpt.com/docs/non-interactive-mode)
+It invokes Grok (`grok --prompt-file`, structured JSON, session command capture)
+or the supported [Codex non-interactive interface](https://learn.chatgpt.com/docs/non-interactive-mode)
 with structured output and command-event capture.
 
 ## Deliverables
@@ -73,7 +80,7 @@ audit/
   state.json             Snapshot manifest, status, progress, and exclusions
   rounds/001/
     prompt.txt           Exact round instructions
-    events.jsonl         Raw Codex event stream
+    events.jsonl         Raw runtime event stream
     stderr.log           Runtime diagnostics
     response.json        Model's proposed structured result
     commands.json        Captured completed command executions
@@ -107,10 +114,10 @@ a follow-up round.
 
 ## Boundaries and current limitations
 
-- The runtime uses a workspace-write sandbox and disables shell network access.
-  It keeps Codex's existing authentication but ignores personal CLI configuration
-  to avoid loading configured external integrations. Global skill descriptions
-  may still be supplied by Codex; the audit prompt does not invoke those skills.
+- Codex runs use a workspace-write sandbox and disable shell network access.
+  Grok defaults to `--sandbox off` (no bubblewrap). Pass `--sandbox workspace`
+  or `strict` when `bwrap` is installed. Global skill descriptions may still be
+  supplied by the selected CLI; the audit prompt does not invoke those skills.
 - Reproductions use installed local tools and synthetic data. Missing dependencies,
   unavailable contract forks, or services produce blockers. There is no automatic
   dependency installation, live exploitation, or production access.
@@ -118,9 +125,9 @@ a follow-up round.
   filenames, and files over 2 MB are excluded. Snapshot limits are 20,000 files and
   100 MB. Inclusion hashes and explicit exclusions are recorded; ignored directory
   contents are not exhaustively enumerated. Excluded code is not covered.
-- Sandboxing is supplied by Codex, not a VM created by Apex. Run the CLI from a
-  normal terminal with a functioning Codex sandbox. Some already-sandboxed macOS
-  hosts cannot initialize a second sandbox; Apex records this as BLOCKED.
+- Sandboxing is supplied by the selected CLI, not a VM created by Apex. Some
+  already-sandboxed hosts cannot initialize a second sandbox; Apex records this
+  as BLOCKED.
 - Evidence validation checks recorded execution and required fields. It cannot
   mathematically prove exploit semantics, prevent every model error, or certify
   whole-project security. Findings still merit human review. Hashes support

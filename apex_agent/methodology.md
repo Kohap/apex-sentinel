@@ -48,7 +48,7 @@ under artifacts/. proof.command is the exact shell command submitted to the tool
 (the shell wrapper need not be included). The command must name that artifact.
 proof.exit_code must be zero. proof.observation and proof.control_observation must
 be different, literal excerpts from that command's actual output. The controller
-checks them against captured Codex command events, not a self-written log.
+checks them against captured command events from the runtime, not a self-written log.
 
 All six gates require PASS with concrete evidence for confirmation. If anything is
 unresolved, set status unverified and next_action to a specific experiment or blocker.

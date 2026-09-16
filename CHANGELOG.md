@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.1 — 2026-09-16
+
+Add Grok CLI as a first-class v2 audit runtime so Apex can run without Codex.
+
+- `apex --runtime auto|grok|codex` (default auto: Grok when authenticated, else Codex).
+- `GrokRuntime` drives headless `grok --prompt-file` with `--json-schema` and captures
+  bash tool events from the Grok session transcript.
+- `--sandbox off` by default (bubblewrap `workspace`/`strict` profiles fail on hosts
+  without `bwrap`); Codex sandbox is unchanged.
+- Coverage paths may be cited as `source/…` or relative to the snapshot root.
+- 38 unit tests (Codex adapter fixtures plus Grok adapter fixtures).
+
 ## 2.0.0 — 2026-09-16
 
 Convert Apex into a local repository audit agent powered by Codex CLI.
