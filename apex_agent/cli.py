@@ -35,6 +35,7 @@ def parser():
     audit.add_argument("--chain-id", type=int, help="Chain id of the forked network (on-chain mode)")
     audit.add_argument("--fork-block", type=int, help="Block the fork is pinned to (on-chain mode)")
     audit.add_argument("--address", action="append", default=[], help="Deployed in-scope contract address; repeatable (on-chain mode)")
+    audit.add_argument("--ledger", type=Path, help="Known-findings ledger JSON shared across audits of this target (created if missing)")
     resume = sub.add_parser("resume", help="Continue a partial or interrupted audit from saved evidence")
     resume.add_argument("run", type=Path)
     for command in (audit, resume):
@@ -97,10 +98,14 @@ def main(argv=None):
             stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
             run_dir = args.output or target.parent / f"{target.name}-apex-{stamp}"
             onchain = onchain_config(args.fork_url, args.chain_id, args.fork_block, args.address)
-            create_run(target, run_dir, args.focus, args.model, onchain)
+            create_run(target, run_dir, args.focus, args.model, onchain, args.ledger)
         else:
             run_dir = args.run
         result = run_agent(run_dir, runtime, args.max_rounds, args.timeout, args.budget)
+        if result.get("ledger"):
+            from .ledger import update as update_ledger
+            count = update_ledger(result["ledger"], result, run_dir)
+            print(f"Ledger: {result['ledger']} ({count} known finding(s))")
         print(f"\n{result['status']} — {sum(f['status'] == 'confirmed' for f in result['findings'])} confirmed finding(s)")
         print(f"Runtime: {runtime.name}")
         print(f"Report: {(Path(run_dir) / 'report.md').resolve()}")
