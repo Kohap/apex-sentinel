@@ -18,4 +18,4 @@ apex = "apex_agent.cli:main"
 include = ["apex_agent*"]
 
 [tool.setuptools.package-data]
-apex_agent = ["methodology.md"]
+apex_agent = ["methodology.md", "onchain.md"]
