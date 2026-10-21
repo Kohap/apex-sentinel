@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 from . import __version__
-from .engine import create_run, run_agent, lock
+from .engine import create_run, run_agent, lock, onchain_config
 from .report import save_report
 from .runtime import CodexRuntime, GrokRuntime, doctor, doctor_auto, doctor_grok
 from .storage import load_json
@@ -31,6 +31,10 @@ def parser():
     audit.add_argument("--output", type=Path, help="New directory outside the audited repository")
     audit.add_argument("--focus", default="Review reachable security defects in this repository; state coverage limits.")
     audit.add_argument("--model", help="Optional model id; otherwise use the CLI default")
+    audit.add_argument("--fork-url", help="Opt-in on-chain mode: local fork RPC on loopback (e.g. anvil at http://127.0.0.1:8545)")
+    audit.add_argument("--chain-id", type=int, help="Chain id of the forked network (on-chain mode)")
+    audit.add_argument("--fork-block", type=int, help="Block the fork is pinned to (on-chain mode)")
+    audit.add_argument("--address", action="append", default=[], help="Deployed in-scope contract address; repeatable (on-chain mode)")
     resume = sub.add_parser("resume", help="Continue a partial or interrupted audit from saved evidence")
     resume.add_argument("run", type=Path)
     for command in (audit, resume):
@@ -92,7 +96,8 @@ def main(argv=None):
             target = args.repository.resolve()
             stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
             run_dir = args.output or target.parent / f"{target.name}-apex-{stamp}"
-            create_run(target, run_dir, args.focus, args.model)
+            onchain = onchain_config(args.fork_url, args.chain_id, args.fork_block, args.address)
+            create_run(target, run_dir, args.focus, args.model, onchain)
         else:
             run_dir = args.run
         result = run_agent(run_dir, runtime, args.max_rounds, args.timeout, args.budget)
