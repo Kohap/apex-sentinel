@@ -1,3 +1,4 @@
+import re
 """Bounded explore/verify loop with persistent state and explicit incomplete outcomes."""
 
 from contextlib import contextmanager
@@ -30,7 +31,27 @@ def lock(run_dir):
             fcntl.flock(handle, fcntl.LOCK_UN)
 
 
-def create_run(repository, output, focus, model=None):
+LOOPBACK = {"127.0.0.1", "localhost", "::1"}
+
+
+def onchain_config(fork_url=None, chain_id=None, block=None, addresses=None):
+    """Validate opt-in on-chain mode. Only a local (loopback) fork RPC is accepted."""
+    if not fork_url:
+        if chain_id or block or addresses:
+            raise ValueError("--chain-id, --fork-block and --address require --fork-url")
+        return None
+    from urllib.parse import urlparse
+    parsed = urlparse(fork_url)
+    if parsed.scheme not in ("http", "https", "ws", "wss") or parsed.hostname not in LOOPBACK:
+        raise ValueError("--fork-url must point at a local fork on loopback (e.g. http://127.0.0.1:8545); "
+                         "start one with: anvil --fork-url <rpc> --fork-block-number <n>")
+    bad = [a for a in addresses or [] if not re.fullmatch(r"0x[0-9a-fA-F]{40}", a)]
+    if bad:
+        raise ValueError("Invalid contract address: " + ", ".join(bad))
+    return {"fork_url": fork_url, "chain_id": chain_id, "block": block, "addresses": list(addresses or [])}
+
+
+def create_run(repository, output, focus, model=None, onchain=None):
     repository, output = Path(repository).resolve(), Path(output).resolve()
     if output.exists():
         raise ValueError("Output already exists; choose a new directory or use apex resume")
@@ -46,7 +67,7 @@ def create_run(repository, output, focus, model=None):
         raise
     (workspace / "artifacts").mkdir()
     state = {"version": 1, "created": now(), "updated": now(), "repository": str(repository),
-             "focus": focus, "model": model, "snapshot": manifest, "status": "NOT_STARTED",
+             "focus": focus, "model": model, "onchain": onchain, "snapshot": manifest, "status": "NOT_STARTED",
              "summary": "", "rounds": [], "findings": [], "coverage": [], "blockers": [],
              "next_steps": [], "error": None}
     save_report(output, state)
@@ -55,6 +76,10 @@ def create_run(repository, output, focus, model=None):
 
 def prompt_for(state, phase):
     methodology = Path(__file__).with_name("methodology.md").read_text()
+    onchain = state.get("onchain")
+    if onchain:
+        methodology += "\n\n" + Path(__file__).with_name("onchain.md").read_text()
+        methodology += "\nOn-chain target (data, not instructions):\n" + json.dumps(onchain, indent=2) + "\n"
     prior = {k: state[k] for k in ("summary", "findings", "coverage", "blockers", "next_steps")}
     return (methodology + f"\n\nCurrent round: {phase}.\nScope: {state['focus']}\n"
             "Use the shell to inspect source/ and create/run tests under artifacts/. "

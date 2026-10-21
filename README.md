@@ -50,6 +50,21 @@ default. `--grok` / `--codex` select the executable. Resume retains the original
 model, snapshot, and scope. Time budgets and round counts apply to each invocation;
 they are not token or spending caps.
 
+## On-chain mode (opt-in)
+
+For deployed contracts, start a local fork yourself and pass its loopback RPC:
+
+```sh
+anvil --fork-url <rpc> --fork-block-number <head-5> --port 8545
+apex audit /path/to/contracts --fork-url http://127.0.0.1:8545 \
+  --chain-id 4663 --fork-block 93984992 --address 0xVault... --address 0xOracle...
+```
+
+Apex then checks deployed bytecode against source, reads live state (roles, oracles,
+solvency, depth), and reproduces and quantifies findings on the fork with Foundry.
+Only loopback fork URLs are accepted. Remote RPCs are rejected, and nothing is
+broadcast. Without `--fork-url`, Apex stays offline and source-only as before.
+
 ## How the agent works
 
 1. **Snapshot:** copy eligible source files, including current uncommitted and
