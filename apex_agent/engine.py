@@ -30,7 +30,7 @@ def lock(run_dir):
             fcntl.flock(handle, fcntl.LOCK_UN)
 
 
-def create_run(repository, output, focus, model=None):
+def create_run(repository, output, focus, model=None, ledger=None):
     repository, output = Path(repository).resolve(), Path(output).resolve()
     if output.exists():
         raise ValueError("Output already exists; choose a new directory or use apex resume")
@@ -46,7 +46,7 @@ def create_run(repository, output, focus, model=None):
         raise
     (workspace / "artifacts").mkdir()
     state = {"version": 1, "created": now(), "updated": now(), "repository": str(repository),
-             "focus": focus, "model": model, "snapshot": manifest, "status": "NOT_STARTED",
+             "focus": focus, "model": model, "ledger": str(Path(ledger).resolve()) if ledger else None, "snapshot": manifest, "status": "NOT_STARTED",
              "summary": "", "rounds": [], "findings": [], "coverage": [], "blockers": [],
              "next_steps": [], "error": None}
     save_report(output, state)
@@ -55,6 +55,11 @@ def create_run(repository, output, focus, model=None):
 
 def prompt_for(state, phase):
     methodology = Path(__file__).with_name("methodology.md").read_text()
+    if state.get("ledger"):
+        from .ledger import prompt_block
+        block = prompt_block(state["ledger"])
+        if block:
+            methodology += "\n\n" + block
     prior = {k: state[k] for k in ("summary", "findings", "coverage", "blockers", "next_steps")}
     return (methodology + f"\n\nCurrent round: {phase}.\nScope: {state['focus']}\n"
             "Use the shell to inspect source/ and create/run tests under artifacts/. "
