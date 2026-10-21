@@ -103,6 +103,15 @@ protection; self-harm only; "admin can rug" without a mechanism; gas, lint, nami
 missing events. Correct SafeERC20, nonReentrant, checked 0.8 casts, and two-step
 ownership are not findings by themselves.
 
+## Confidence
+
+For each finding, list confidence_deductions that apply (empty when none):
+partial_path (some step of caller-to-harm is not traced with concrete values),
+bounded_impact (loss is capped and does not compound), specific_state (needs a
+reachable but uncommon state). The controller scores 100 minus 20/15/10 per
+deduction; below 75 the repair is marked as needing a completed trace. Be honest:
+deductions do not block confirmation, but hiding one misleads the reader.
+
 ## Follow-up verification
 
 In verify/follow-up rounds, re-open the source and run each proposed confirmed
