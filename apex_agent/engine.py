@@ -51,7 +51,7 @@ def onchain_config(fork_url=None, chain_id=None, block=None, addresses=None):
     return {"fork_url": fork_url, "chain_id": chain_id, "block": block, "addresses": list(addresses or [])}
 
 
-def create_run(repository, output, focus, model=None, onchain=None):
+def create_run(repository, output, focus, model=None, onchain=None, ledger=None):
     repository, output = Path(repository).resolve(), Path(output).resolve()
     if output.exists():
         raise ValueError("Output already exists; choose a new directory or use apex resume")
@@ -67,7 +67,7 @@ def create_run(repository, output, focus, model=None, onchain=None):
         raise
     (workspace / "artifacts").mkdir()
     state = {"version": 1, "created": now(), "updated": now(), "repository": str(repository),
-             "focus": focus, "model": model, "onchain": onchain, "snapshot": manifest, "status": "NOT_STARTED",
+             "focus": focus, "model": model, "ledger": str(Path(ledger).resolve()) if ledger else None, "onchain": onchain, "snapshot": manifest, "status": "NOT_STARTED",
              "summary": "", "rounds": [], "findings": [], "coverage": [], "blockers": [],
              "next_steps": [], "error": None}
     save_report(output, state)
@@ -76,6 +76,11 @@ def create_run(repository, output, focus, model=None, onchain=None):
 
 def prompt_for(state, phase):
     methodology = Path(__file__).with_name("methodology.md").read_text()
+    if state.get("ledger"):
+        from .ledger import prompt_block
+        block = prompt_block(state["ledger"])
+        if block:
+            methodology += "\n\n" + block
     onchain = state.get("onchain")
     if onchain:
         methodology += "\n\n" + Path(__file__).with_name("onchain.md").read_text()
