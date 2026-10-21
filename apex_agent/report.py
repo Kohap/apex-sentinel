@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+from .schema import confidence, CONFIDENCE_THRESHOLD
+
 from .storage import write_json
 
 
@@ -18,7 +20,11 @@ def render(state):
     if not confirmed:
         lines += ["No finding has passed runtime evidence and follow-up verification.", ""]
     for f in confirmed:
+        score = confidence(f)
+        repair_label = "**Repair:**" if score >= CONFIDENCE_THRESHOLD else \
+            f"**Repair (confidence below {CONFIDENCE_THRESHOLD}; complete the trace before applying):**"
         lines += [f"### {f['id']}: {f['title']} ({f['severity']})", "",
+                  f"**Confidence:** {score}/100" + (f" (deductions: {', '.join(sorted(set(f.get('confidence_deductions', []))))})" if f.get("confidence_deductions") else ""), "",
                   f"**Location:** `source/{f['file']}:{f['line']}`", "",
                   f"**Preconditions:** {f['preconditions']}", "",
                   f"**Expected:** {f['expected']}", "", f"**Observed:** {f['actual']}", "",
@@ -29,7 +35,7 @@ def render(state):
                   f"Failure observation: {proof['observation']}", "",
                   f"Legitimate-use control: {proof['control_observation']}", "",
                   f"**Falsification attempt:** {f['falsification']}", "",
-                  f"**Repair:** {f['fix']}", "", f"**Regression check:** {f['regression_test']}", "",
+                  f"{repair_label} {f['fix']}", "", f"**Regression check:** {f['regression_test']}", "",
                   f"Captured evidence: `rounds/{f['round']:03d}/commands.json`, command `{f['evidence_binding']['command_id']}`.", ""]
     lines += ["## Unverified leads and dismissed claims", ""]
     others = [f for f in state["findings"] if f["status"] != "confirmed"]

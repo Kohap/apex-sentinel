@@ -18,6 +18,16 @@ def array(items):
 
 
 GATES = ("reachability", "impact", "reproduction", "existing_protections", "control_case", "scope")
+DEDUCTIONS = ("partial_path", "bounded_impact", "specific_state")
+DEDUCTION_POINTS = {"partial_path": 20, "bounded_impact": 15, "specific_state": 10}
+CONFIDENCE_THRESHOLD = 75
+
+
+def confidence(finding):
+    """100 minus each distinct deduction; older states without the field score 100."""
+    return 100 - sum(DEDUCTION_POINTS[d] for d in set(finding.get("confidence_deductions", [])))
+
+
 GATE = obj({"result": choices("PASS", "FAIL", "UNRESOLVED"), "evidence": TEXT})
 PROOF = obj({"artifact": TEXT, "command": TEXT, "exit_code": {"type": "integer"},
              "observation": TEXT, "control_observation": TEXT})
@@ -29,6 +39,7 @@ FINDING = obj({
     "reproduction_steps": array(TEXT), "proof": PROOF,
     "falsification": TEXT, "fix": TEXT, "regression_test": TEXT,
     "next_action": TEXT, "gates": obj({name: GATE for name in GATES}),
+    "confidence_deductions": array(choices(*DEDUCTIONS)),
 })
 RESPONSE = obj({
     "summary": TEXT, "done": {"type": "boolean"},
