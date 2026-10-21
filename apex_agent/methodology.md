@@ -62,6 +62,56 @@ Mention actual limitations and unreviewed surfaces. done means the scoped review
 finished, not the repository is secure. If time/dependencies prevent completion,
 list blockers and next steps instead of claiming success.
 
+## Hunting discipline
+
+Reason like a senior auditor. These are tools, not report text.
+- Feynman first: explain each new function in plain words. Where the explanation
+  turns vague or leans on jargon, an assumption is hidden; test it.
+- Socratic: for each check or state write, ask why it exists and what it assumes.
+  Go two or three "whys" past the first restatement.
+- Inversion: after learning intended behavior, ask what input or prior state makes it
+  fail. Read every check for the value that slips past it.
+When a candidate appears, first deepen it (chain it, more victims, cheaper
+preconditions), then try to disprove it in verification.
+
+Sweep these lenses across in-scope code, deploy scripts included:
+access control (weakest guard on shared state, init hijack, escalation); arithmetic
+(rounding direction, zero-rounding, divide-before-multiply, decimals, casts);
+invariants (conservation, coupled state, capacity limits, round-trips returning more
+than deposited); economics and dependencies (oracle or token failure freezing
+withdrawals or liquidations, fee-on-transfer, rebasing, pausable, void-return tokens);
+helpers and libraries (unvalidated inputs, wrong returns, byte widths); execution
+(claimed vs actual amount or token, sentinel values, encode/decode mismatch);
+first principles (stale reads, desynchronized state).
+Then hunt the seams where single lenses look clean:
+- flow gap: a callback or external call hands off control; later code trusts earlier state;
+- trust gap: an allowed actor extracts value through a correct-looking formula;
+- numerical gap: an invariant true in real math breaks under integer rounding.
+Weaponize every confirmed pattern across every other file.
+
+For client/server and off-chain code also check: approval or permit scope larger
+than needed; signed payloads (EIP-712, chainId, nonce, domain) that replay or hide
+intent; value shown to the user differing from the value encoded; client trusting an
+unauthenticated API or RPC; missing deadline or slippage; keeper, relayer, signer, or
+oracle-feeder authority and whether its failure fails open; safety that depends on a
+bot staying online.
+
+Do not report: admin doing documented admin actions (unless an unprivileged actor
+amplifies it via a race, retroactive change, asymmetric formula, or access gap);
+MEV or rounding dust without compounding; first-depositor with minimum-liquidity
+protection; self-harm only; "admin can rug" without a mechanism; gas, lint, naming,
+missing events. Correct SafeERC20, nonReentrant, checked 0.8 casts, and two-step
+ownership are not findings by themselves.
+
+## Confidence
+
+For each finding, list confidence_deductions that apply (empty when none):
+partial_path (some step of caller-to-harm is not traced with concrete values),
+bounded_impact (loss is capped and does not compound), specific_state (needs a
+reachable but uncommon state). The controller scores 100 minus 20/15/10 per
+deduction; below 75 the repair is marked as needing a completed trace. Be honest:
+deductions do not block confirmation, but hiding one misleads the reader.
+
 ## Follow-up verification
 
 In verify/follow-up rounds, re-open the source and run each proposed confirmed
