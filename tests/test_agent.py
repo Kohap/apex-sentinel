@@ -32,6 +32,7 @@ def finding():
         "fix": "Check the authenticated caller against the invoice owner before returning it.",
         "regression_test": "Reject non-owner reads and continue allowing the real owner's reads.",
         "next_action": "", "gates": {g: {"result": "PASS", "evidence": "The fixture output and source establish this condition."} for g in GATES},
+        "confidence_deductions": [],
     }
 
 
