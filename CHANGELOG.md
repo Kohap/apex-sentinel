@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Autonomous loop mode: `--loop N` on `audit` and `resume` chains up to N ordinary
+  passes, each still capped by `--max-rounds`, `--timeout` and `--budget`. A pass is a
+  plain `run_agent` call, so gates, evidence capture and snapshot checks are unchanged.
+  The loop stops on COMPLETE_SCOPED, BLOCKED or INTERRUPTED; after `--stall` passes
+  with no change in findings, coverage or blockers (default 2); or when `--loop-budget`
+  seconds run out. The ledger updates after every pass. The default `--loop 1` behaves
+  exactly as before.
+
 ## 2.1.0 — 2026-10-22
 
 Hunting discipline, on-chain mode, confidence scoring, and a findings ledger.

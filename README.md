@@ -173,3 +173,16 @@ Legacy scripts remain available for existing hunt folders. The new runtime does
 not use their Markdown gates or write to the global v1 Brain.
 
 Copyright (c) 2026 Gift. All rights reserved. Existing [license](LICENSE) retained.
+
+
+## Loop mode
+
+Let Apex keep resuming until the audit settles:
+
+```bash
+apex audit ./target --loop 6 --stall 2 --loop-budget 5400 --ledger ./target.ledger.json
+apex resume ./target-apex-<stamp> --loop 4
+```
+
+Each pass is a normal bounded invocation. The loop stops when the audit is complete,
+blocked, interrupted, stalled, or out of time.
