@@ -46,6 +46,12 @@ def parser():
         command.add_argument("--grok", default="grok", help="Path to Grok executable")
         command.add_argument("--runtime", choices=("auto", "grok", "codex"), default="auto",
                              help="Audit backend (default: auto, prefer Grok when authenticated)")
+        command.add_argument("--loop", type=positive, default=1,
+                             help="Autonomous loop: up to N passes of --max-rounds each, stopping when complete, blocked, or stalled (default: 1 = no loop)")
+        command.add_argument("--stall", type=positive, default=2,
+                             help="Loop mode: stop after N consecutive passes with no change in findings/coverage (default: 2)")
+        command.add_argument("--loop-budget", type=positive,
+                             help="Loop mode: maximum total seconds across all passes")
         command.add_argument("--sandbox", default="off",
                              help="Grok sandbox profile: off (default; use when bubblewrap is missing), workspace, read-only, strict (ignored for Codex)")
     for name in ("status", "report"):
@@ -101,11 +107,18 @@ def main(argv=None):
             create_run(target, run_dir, args.focus, args.model, onchain, args.ledger)
         else:
             run_dir = args.run
-        result = run_agent(run_dir, runtime, args.max_rounds, args.timeout, args.budget)
-        if result.get("ledger"):
-            from .ledger import update as update_ledger
-            count = update_ledger(result["ledger"], result, run_dir)
-            print(f"Ledger: {result['ledger']} ({count} known finding(s))")
+        from .loop import run_loop
+
+        def record(result):
+            if result.get("ledger"):
+                from .ledger import update as update_ledger
+                count = update_ledger(result["ledger"], result, run_dir)
+                print(f"Ledger: {result['ledger']} ({count} known finding(s))")
+
+        result, reason = run_loop(lambda: run_agent(run_dir, runtime, args.max_rounds, args.timeout, args.budget),
+                                  args.loop, args.stall, args.loop_budget, on_pass=record)
+        if args.loop > 1:
+            print(f"Loop stopped: {reason}")
         print(f"\n{result['status']} — {sum(f['status'] == 'confirmed' for f in result['findings'])} confirmed finding(s)")
         print(f"Runtime: {runtime.name}")
         print(f"Report: {(Path(run_dir) / 'report.md').resolve()}")
