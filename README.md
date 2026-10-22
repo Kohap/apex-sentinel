@@ -186,3 +186,15 @@ apex resume ./target-apex-<stamp> --loop 4
 
 Each pass is a normal bounded invocation. The loop stops when the audit is complete,
 blocked, interrupted, stalled, or out of time.
+
+## Loop mode
+
+Run unattended until the audit settles:
+
+```bash
+apex resume RUN_DIR --loop 6 --stall 2 --loop-budget 5400
+```
+
+Each pass is a normal bounded invocation with the same gates and evidence rules. The
+loop stops on complete, blocked, or interrupted, when passes stop changing findings
+or coverage, or when the wall budget runs out.
