@@ -50,6 +50,26 @@ default. `--grok` / `--codex` select the executable. Resume retains the original
 model, snapshot, and scope. Time budgets and round counts apply to each invocation;
 they are not token or spending caps.
 
+## What's new in 2.1
+
+- **Hunting discipline:** Feynman, Socratic and Inversion reasoning. Specialist lenses
+  (access control, math precision, invariants, economics, periphery, execution, first
+  principles) and seam lenses (flow-gap, trust-gap, numerical-gap). Frontend, backend
+  and off-chain checks. Deploy scripts are in scope, and an explicit do-not-report list
+  includes the admin-amplifier rule. See `apex_agent/methodology.md` and
+  `references/pashov-lenses.md`.
+- **On-chain mode:** opt-in, loopback-only fork verification and PoCs (below), plus
+  field checks: solvency by event replay, sizing fee-on-transfer gaps, owner-posted
+  prices treated as trust, and pot/cap exhaustion.
+- **Confidence score:** each finding lists `confidence_deductions` (partial_path −20,
+  bounded_impact −15, specific_state −10) from a base of 100. The report prints the
+  score and flags repairs scoring under 75 as needing a full trace.
+- **Known-findings ledger:** `--ledger PATH` keeps findings across audits and resumes
+  in an atomic JSON file keyed by file and title, with first/last seen, status,
+  severity, line, and runs. Apex hunts new ground and re-reports known defects only
+  with fresh evidence.
+- **Loop mode (unreleased):** `--loop N` keeps resuming until the audit settles (below).
+
 ## On-chain mode (opt-in)
 
 For deployed contracts, start a local fork yourself and pass its loopback RPC:
@@ -64,6 +84,29 @@ Apex then checks deployed bytecode against source, reads live state (roles, orac
 solvency, depth), and reproduces and quantifies findings on the fork with Foundry.
 Only loopback fork URLs are accepted. Remote RPCs are rejected, and nothing is
 broadcast. Without `--fork-url`, Apex stays offline and source-only as before.
+
+## Known-findings ledger
+
+```bash
+apex audit /path/to/contracts --ledger ./target.ledger.json
+```
+
+The ledger is created if missing and updated after every invocation or loop pass.
+
+## Loop mode
+
+Let Apex keep resuming until the audit settles:
+
+```bash
+apex audit ./target --loop 6 --stall 2 --loop-budget 5400 --ledger ./target.ledger.json
+apex resume ./target-apex-<stamp> --loop 4
+```
+
+Each pass is a normal invocation bounded by `--max-rounds`, `--timeout` and `--budget`,
+with the same gates and evidence rules. The loop stops when the audit is complete,
+blocked or interrupted, after `--stall` passes with no change in findings, coverage or
+blockers (default 2), or when `--loop-budget` seconds run out. The default `--loop 1`
+matches 2.1.0 behaviour.
 
 ## How the agent works
 
@@ -173,28 +216,3 @@ Legacy scripts remain available for existing hunt folders. The new runtime does
 not use their Markdown gates or write to the global v1 Brain.
 
 Copyright (c) 2026 Gift. All rights reserved. Existing [license](LICENSE) retained.
-
-
-## Loop mode
-
-Let Apex keep resuming until the audit settles:
-
-```bash
-apex audit ./target --loop 6 --stall 2 --loop-budget 5400 --ledger ./target.ledger.json
-apex resume ./target-apex-<stamp> --loop 4
-```
-
-Each pass is a normal bounded invocation. The loop stops when the audit is complete,
-blocked, interrupted, stalled, or out of time.
-
-## Loop mode
-
-Run unattended until the audit settles:
-
-```bash
-apex resume RUN_DIR --loop 6 --stall 2 --loop-budget 5400
-```
-
-Each pass is a normal bounded invocation with the same gates and evidence rules. The
-loop stops on complete, blocked, or interrupted, when passes stop changing findings
-or coverage, or when the wall budget runs out.

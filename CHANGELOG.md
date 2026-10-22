@@ -10,14 +10,6 @@
   seconds run out. The ledger updates after every pass. The default `--loop 1` behaves
   exactly as before.
 
-## Unreleased
-
-- Autonomous loop mode: `--loop N` chains up to N bounded passes (each one is the usual
-  `--max-rounds`/`--timeout`/`--budget` invocation) and stops when the audit is
-  COMPLETE_SCOPED, BLOCKED, or INTERRUPTED, after `--stall` passes with no change in
-  findings/coverage/blockers (default 2), or at `--loop-budget` seconds. The ledger is
-  updated after every pass. The default `--loop 1` keeps 2.1.0 behaviour exactly.
-
 ## 2.1.0 — 2026-10-22
 
 Hunting discipline, on-chain mode, confidence scoring, and a findings ledger.
