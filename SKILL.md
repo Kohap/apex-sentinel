@@ -8,7 +8,7 @@ description: >-
   authorized repository security reviews and actionable repair reports. Legacy
   v1 hunt folders: load references/legacy-v1-skill.md; do not restart OPEN hunts.
 metadata:
-  version: 2.0.1
+  version: 2.1.0
   author: Gift (https://github.com/Kohap)
   runtime: apex_agent
 ---

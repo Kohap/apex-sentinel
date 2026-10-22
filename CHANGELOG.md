@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.1.0 — 2026-10-22
+
+Hunting discipline, on-chain mode, confidence scoring, and a findings ledger.
+
+- Methodology: Feynman/Socratic/Inversion reasoning; specialist and seam lenses
+  (flow, trust, numerical); frontend/backend/off-chain checks; deploy scripts in
+  scope; an explicit do-not-report list with the admin-amplifier rule
+  (`references/pashov-lenses.md`).
+- Opt-in on-chain mode: `--fork-url` (loopback only), `--chain-id`, `--fork-block`,
+  repeatable `--address`. Bytecode-vs-source verification, live-state reads, and fork
+  PoCs that measure cost and impact. Never broadcasts (`apex_agent/onchain.md`).
+- Confidence score: `confidence_deductions` (partial_path −20, bounded_impact −15,
+  specific_state −10) starting from 100, with a threshold of 75; the report flags
+  repairs below it. Older saved states default to 100.
+- Known-findings ledger: `--ledger PATH`, an atomic JSON store keyed by file+title
+  that persists across audits and resumes.
+- On-chain field checks: solvency by event replay, sizing fee-on-transfer gaps,
+  owner-posted prices treated as trust, and pot/cap exhaustion.
+
 ## 2.0.1 — 2026-09-16
 
 Add Grok CLI as a first-class v2 audit runtime so Apex can run without Codex.
